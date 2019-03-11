@@ -1,28 +1,43 @@
-import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import {message} from 'antd';
+import ReactDOM from 'react-dom';
+import browserHistory from 'react-router';
+import axios from 'axios';
+import createHistory from 'history/createBrowserHistory';
+import Root from './router';
+import store from './redux';
 
-class App extends Component {
-  render() {
-    return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-        </header>
-      </div>
-    );
+// css
+import './style/index.styl';
+// iconfont
+import './assets/iconfont.css';
+import './assets/iconfont.js';
+
+const history = createHistory();
+export default history;
+// window object
+window.store = store;
+window.axios = axios;
+
+const tid = localStorage.getItem('tid');
+axios.defaults.headers.tid = tid || ''; // axios headers token
+axios.interceptors.response.use(
+  res => res,
+  err => {
+    const {data: {err: errnum, error}} = (err || {}).response;
+    if (errnum === 200 && error) {
+      message.success(error);
+    } else {
+      message.error(error);
+    }
+    if (err.response.status === 401) {
+      message.info('您的登录已过期，请重新登录');
+      setTimeout(() => {
+        history.replace('/login');
+        localStorage.removeItem('tid');
+        window.location.reload();
+      }, 600);
+    }
   }
-}
-
-export default App;
+);
+ReactDOM.render(<Root />, document.getElementById('app'));
